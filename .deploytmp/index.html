@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#05070d" />
+    <title>ORBIS FM · 3D 地球全球广播电台</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- 字体使用系统字体栈（含本地 Sora/Inter 回退），避免外部字体请求在国内网络下报错 -->
+    <!-- Cesium + hls.js: multi-CDN failover bootstrap, then load the app module -->
+    <script>
+      (function () {
+        var CESIUM_VER = '1.118.0';
+        var HLS_VER = '1.5.13';
+        var CESIUM_BASES = [
+          'https://cdn.jsdelivr.net/npm/cesium@' + CESIUM_VER + '/Build/Cesium',
+          'https://unpkg.com/cesium@' + CESIUM_VER + '/Build/Cesium',
+          'https://cdnjs.cloudflare.com/ajax/libs/cesium/' + CESIUM_VER,
+          'https://registry.npmmirror.com/cesium/' + CESIUM_VER + '/files/Build/Cesium',
+        ];
+        var HLS_URLS = [
+          'https://cdn.jsdelivr.net/npm/hls.js@' + HLS_VER + '/dist/hls.min.js',
+          'https://unpkg.com/hls.js@' + HLS_VER + '/dist/hls.min.js',
+          'https://cdnjs.cloudflare.com/ajax/libs/hls.js/' + HLS_VER + '/hls.min.js',
+        ];
+
+        function loadScript(src) {
+          return new Promise(function (ok, bad) {
+            var s = document.createElement('script');
+            s.src = src;
+            s.async = false;
+            s.onload = ok;
+            s.onerror = function () { bad(new Error('script fail: ' + src)); };
+            document.head.appendChild(s);
+          });
+        }
+        function loadCss(href) {
+          var l = document.createElement('link');
+          l.rel = 'stylesheet';
+          l.href = href;
+          document.head.appendChild(l);
+        }
+        function failBootstrap() {
+          var st = document.getElementById('bootStatus');
+          if (st) st.textContent = '3D 地球引擎的所有 CDN 节点均加载失败，请检查网络后重试';
+          var b = document.getElementById('bootRetry');
+          if (b) b.hidden = false;
+        }
+
+        // Resolves once Cesium (and best-effort hls.js) are ready. The app
+        // module (Vite-bundled) awaits this before touching the engine.
+        window.__orbisReady = (async function () {
+          var ready = false;
+          for (var i = 0; i < CESIUM_BASES.length; i++) {
+            window.CESIUM_BASE_URL = CESIUM_BASES[i] + '/';
+            try {
+              await loadScript(CESIUM_BASES[i] + '/Cesium.js');
+              if (window.Cesium) {
+                loadCss(CESIUM_BASES[i] + '/Widgets/widgets.css');
+                ready = true;
+                break;
+              }
+            } catch (e) { /* try next mirror */ }
+          }
+          if (!ready) { failBootstrap(); throw new Error('Cesium CDN unavailable'); }
+          // hls.js is optional (Safari plays HLS natively); never block boot on it
+          if (!window.Hls) {
+            for (var j = 0; j < HLS_URLS.length; j++) {
+              try { await loadScript(HLS_URLS[j]); if (window.Hls) break; } catch (e) {}
+            }
+          }
+        })();
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-BsiFD17D.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-DafZN-2u.css">
+  </head>
+  <body>
+    <div id="cesiumContainer"></div>
+
+    <!-- ============ 启动加载层 ============ -->
+    <div id="boot" class="boot">
+      <div class="boot-ring"></div>
+      <div class="orb-logo orb-logo--boot">
+        <svg viewBox="0 0 48 48" width="46" height="46" aria-hidden="true">
+          <circle cx="24" cy="24" r="21" fill="none" stroke="url(#lg1)" stroke-width="1.6" />
+          <ellipse cx="24" cy="24" rx="21" ry="8.5" fill="none" stroke="#3df5a6" stroke-width="1.2" opacity=".8" />
+          <ellipse cx="24" cy="24" rx="8.5" ry="21" fill="none" stroke="#7fd8ff" stroke-width="1" opacity=".55" />
+          <circle cx="31.5" cy="15" r="2.6" fill="#3df5a6" />
+          <defs>
+            <linearGradient id="lg1" x1="0" y1="0" x2="48" y2="48">
+              <stop offset="0" stop-color="#3df5a6" />
+              <stop offset="1" stop-color="#4aa8ff" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <h1 class="boot-title">ORBIS&nbsp;FM</h1>
+      <p class="boot-sub">3D 地球 · 全球广播网络</p>
+      <div class="boot-bar"><div id="bootBar" class="boot-bar__fill"></div></div>
+      <p id="bootStatus" class="boot-status">正在初始化 3D 地球引擎…</p>
+      <button id="bootRetry" class="boot-retry" hidden>重新加载</button>
+    </div>
+
+    <!-- ============ 顶部栏 ============ -->
+    <header class="topbar glass">
+      <div class="brand">
+        <div class="orb-logo">
+          <svg viewBox="0 0 48 48" width="38" height="38" aria-hidden="true">
+            <circle cx="24" cy="24" r="21" fill="none" stroke="url(#lg2)" stroke-width="1.8" />
+            <ellipse cx="24" cy="24" rx="21" ry="8.5" fill="none" stroke="#3df5a6" stroke-width="1.3" />
+            <ellipse cx="24" cy="24" rx="8.5" ry="21" fill="none" stroke="#7fd8ff" stroke-width="1" opacity=".6" />
+            <circle cx="31.5" cy="15" r="2.8" fill="#3df5a6" />
+            <defs>
+              <linearGradient id="lg2" x1="0" y1="0" x2="48" y2="48">
+                <stop offset="0" stop-color="#3df5a6" />
+                <stop offset="1" stop-color="#4aa8ff" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <div class="brand-name">ORBIS&nbsp;FM</div>
+          <div class="brand-sub">全球三维广播电台</div>
+        </div>
+      </div>
+
+      <div class="search">
+        <svg class="search-ico" viewBox="0 0 24 24" width="17" height="17"><path fill="currentColor" d="M10 2a8 8 0 1 0 4.9 14.3l5.4 5.4 1.4-1.4-5.4-5.4A8 8 0 0 0 10 2Zm0 2a6 6 0 1 1 0 12 6 6 0 0 1 0-12Z"/></svg>
+        <input id="searchInput" type="text" placeholder="搜索电台、城市、国家或风格…" autocomplete="off" spellcheck="false" aria-label="搜索电台" />
+        <button id="searchClear" class="search-clear" title="清除搜索" aria-label="清除搜索" hidden>
+          <svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7 2.9 18.3 9.2 12 2.9 5.7l1.4-1.4 6.3 6.3 6.3-6.3Z"/></svg>
+        </button>
+        <kbd>⌘K</kbd>
+      </div>
+
+      <div class="topbar-chips" id="regionChips"></div>
+
+      <div class="top-actions">
+        <div class="clock" id="clock" title="当前电台所在时区时间">
+          <span class="clock__utc" id="clockUtc">--:--:--</span>
+          <span class="clock__dot"></span>
+          <span class="clock__label" id="clockLabel">UTC</span>
+        </div>
+        <div class="vsep"></div>
+        <div class="stat" id="statStations" title="当前可收听电台数量">
+          <span class="stat-dot"></span><b data-stat="count">0</b><i>电台</i>
+        </div>
+        <div class="stat"><b data-stat="countries">0</b><i>国家/地区</i></div>
+        <div class="vsep"></div>
+        <button id="btnRotate" class="icon-btn" title="自动旋转 (R)" aria-pressed="true">
+          <svg viewBox="0 0 24 24" width="19" height="19"><path fill="currentColor" d="M12 4a8 8 0 1 0 7.7 10.2l-1.9-.6A6 6 0 1 1 12 6v2.4L15.6 5 12 1.6V4Z"/></svg>
+        </button>
+        <button id="btnHome" class="icon-btn" title="复位视角">
+          <svg viewBox="0 0 24 24" width="19" height="19"><path fill="currentColor" d="M12 3 2 11h3v9h5v-6h4v6h5v-9h3L12 3Z"/></svg>
+        </button>
+        <button id="btnFs" class="icon-btn" title="全屏">
+          <svg viewBox="0 0 24 24" width="19" height="19"><path fill="currentColor" d="M4 4h6v2H6v4H4V4Zm10 0h6v6h-2V6h-4V4ZM4 14h2v4h4v2H4v-6Zm14 0h2v6h-6v-2h4v-4Z"/></svg>
+        </button>
+        <button id="btnPanel" class="icon-btn icon-btn--mobile" title="电台列表">
+          <svg viewBox="0 0 24 24" width="19" height="19"><path fill="currentColor" d="M3 5h18v2H3V5Zm0 6h18v2H3v-2Zm0 6h12v2H3v-2Z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- ============ 左侧：电台列表卡片（含二级页面：最近收听） ============ -->
+    <aside id="panel" class="card card--list glass">
+      <div class="card__head">
+        <div class="card__title">
+          <span class="card__title-text">电台列表</span>
+          <span class="card__count"><span id="listCount">0</span> 台</span>
+        </div>
+        <div class="card__tools">
+          <button id="btnRecent" class="tool-btn" title="查看最近收听的电台">
+            <svg viewBox="0 0 24 24" width="15" height="15"><path fill="currentColor" d="M13 3a9 9 0 1 0 8.9 10h-2.1A7 7 0 1 1 13 5v3l4-4-4-4v2Zm-1 5v5l4 2.2 1-1.8-3-1.6V8H12Z"/></svg>
+            <span>最近</span>
+          </button>
+          <button id="btnFav" class="tool-btn" title="只看收藏" aria-pressed="false">
+            <svg viewBox="0 0 24 24" width="15" height="15"><path fill="currentColor" d="m12 17.3-6.2 3.7 1.6-7L2 9.2l7.1-.6L12 2l2.9 6.6 7.1.6-5.4 4.8 1.6 7Z"/></svg>
+            <span>收藏</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 页面一：全部电台列表 -->
+      <div class="list-page" id="listPage">
+        <div class="chips chips--genre" id="genreChips"></div>
+
+        <div class="filter-bar">
+          <select id="levelSelect" class="f-select" aria-label="按国内级别筛选">
+            <option value="ALL">全部级别</option>
+            <option value="national">国家级</option>
+            <option value="provincial">省级</option>
+            <option value="city">城市台</option>
+            <option value="network">网络电台</option>
+            <option value="regional">港澳台</option>
+          </select>
+          <select id="countrySelect" class="f-select" aria-label="按国家/地区筛选"></select>
+        </div>
+
+        <div id="stationList" class="station-list"></div>
+        <div id="listSentinel" class="list-sentinel"></div>
+
+        <div id="listEmpty" class="list-empty" hidden>
+          <svg viewBox="0 0 24 24" width="40" height="40" opacity=".5"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 2a8 8 0 0 1 6.3 3.1L7.1 18.3A8 8 0 0 1 12 4Zm0 16a8 8 0 0 1-6.3-3.1L16.9 5.7A8 8 0 0 1 12 20Z"/></svg>
+          <p id="emptyText">没有找到匹配的电台</p>
+          <button id="btnClearFilter" class="clear-filter-btn">清除全部筛选</button>
+        </div>
+      </div>
+
+      <!-- 页面二：最近收听 -->
+      <div class="list-page" id="recentPage" hidden>
+        <div class="sub-bar">
+          <button id="recentBack" class="sub-back" title="返回电台列表" aria-label="返回">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M15.4 7.4 14 6l-6 6 6 6 1.4-1.4L10.8 12z"/></svg>
+          </button>
+          <span class="sub-bar__title">最近收听</span>
+          <button id="recentClear" class="sub-clear" title="清空最近收听">清空</button>
+        </div>
+        <div id="recentList" class="station-list"></div>
+        <div id="recentEmpty" class="list-empty" hidden>
+          <svg viewBox="0 0 24 24" width="40" height="40" opacity=".5"><path fill="currentColor" d="M13 3a9 9 0 1 0 8.9 10h-2.1A7 7 0 1 1 13 5v3l4-4-4-4v2Z"/></svg>
+          <p>还没有收听记录</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 移动端列表面板遮罩 -->
+    <div id="panelScrim" class="panel-scrim" hidden></div>
+
+    <!-- ============ 右侧：电台详情卡片（双层页面导航） ============ -->
+    <aside id="detailCard" class="card card--detail glass">
+      <!-- 页面一：引导页 -->
+      <div class="detail-page" id="detailHome">
+        <div class="detail-hero">
+          <div class="detail-hero__orb">
+            <svg viewBox="0 0 48 48" width="44" height="44" aria-hidden="true">
+              <circle cx="24" cy="24" r="20" fill="none" stroke="url(#lgD)" stroke-width="1.6" />
+              <ellipse cx="24" cy="24" rx="20" ry="8" fill="none" stroke="#3df5a6" stroke-width="1.1" opacity=".85" />
+              <ellipse cx="24" cy="24" rx="8" ry="20" fill="none" stroke="#7fd8ff" stroke-width="1" opacity=".6" />
+              <defs><linearGradient id="lgD" x1="0" y1="0" x2="48" y2="48"><stop offset="0" stop-color="#3df5a6"/><stop offset="1" stop-color="#4aa8ff"/></linearGradient></defs>
+            </svg>
+          </div>
+          <h2 class="detail-hero__title">选择一个电台</h2>
+          <p class="detail-hero__sub">从左侧列表选择，或点击地球上的绿色点位，即可在这里查看详情并收听</p>
+        </div>
+        <div class="detail-hints">
+          <div class="hint"><span class="hint__ico">🌐</span><div><b>3,600+ 电台</b><i>覆盖 150+ 国家与地区</i></div></div>
+          <div class="hint"><span class="hint__ico">📡</span><div><b>实时直播流</b><i>失败自动切换下一台</i></div></div>
+          <div class="hint"><span class="hint__ico">⭐</span><div><b>收藏与导出</b><i>一键导出 M3U 播放列表</i></div></div>
+        </div>
+      </div>
+
+      <!-- 页面二：电台详情 -->
+      <div class="detail-page detail-page--station" id="detailStation" hidden>
+        <div class="detail-bar">
+          <button id="detailBack" class="detail-back" title="返回列表" aria-label="返回">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M15.4 7.4 14 6l-6 6 6 6 1.4-1.4L10.8 12z"/></svg>
+          </button>
+          <span class="detail-bar__title">电台详情</span>
+          <span id="liveBadge" class="live-badge" hidden><i></i>LIVE</span>
+        </div>
+
+        <div class="detail-scroll">
+          <!-- 正在播放：播放器控件 -->
+          <div id="player" class="now-playing">
+            <div class="np-main">
+              <div class="player-art" id="playerArt">
+                <div class="player-art__inner" id="playerArtInner">
+                  <svg viewBox="0 0 24 24" width="26" height="26"><path fill="currentColor" d="M9 18V5l12-2v13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+                </div>
+              </div>
+              <div class="np-meta">
+                <div class="player-name" id="playerName">未选择电台</div>
+                <div class="player-loc" id="playerLoc">从列表或地球选择电台</div>
+              </div>
+            </div>
+            <div class="np-row">
+              <div class="np-ctrls">
+                <button id="btnPrev" class="ctrl-btn" title="上一台">
+                  <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M6 6h2v12H6V6Zm3.5 6 9 6V6l-9 6Z"/></svg>
+                </button>
+                <button id="btnPlay" class="play-btn" title="播放/暂停 (空格)">
+                  <svg id="iconPlay" viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M8 5v14l11-7L8 5Z"/></svg>
+                  <svg id="iconPause" viewBox="0 0 24 24" width="24" height="24" hidden><path fill="currentColor" d="M7 5h4v14H7V5Zm6 0h4v14h-4V5Z"/></svg>
+                  <svg id="iconLoad" class="spin" viewBox="0 0 24 24" width="24" height="24" hidden><path fill="currentColor" d="M12 2a10 10 0 0 1 10 10h-3a7 7 0 0 0-7-7V2Z"/></svg>
+                </button>
+                <button id="btnNext" class="ctrl-btn" title="下一台">
+                  <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M16 6h2v12h-2V6Zm-2.5 6-9 6V6l9 6Z"/></svg>
+                </button>
+              </div>
+              <div class="np-right">
+                <button id="btnMute" class="ctrl-btn" title="静音">
+                  <svg id="iconVol" viewBox="0 0 24 24" width="19" height="19"><path fill="currentColor" d="M4 9v6h4l5 5V4L8 9H4Zm12 3a4 4 0 0 0-2-3.5v7A4 4 0 0 0 16 12Zm-2-8.2v2.1a6 6 0 0 1 0 10.2v2.1a8 8 0 0 0 0-14.4Z"/></svg>
+                  <svg id="iconMute" viewBox="0 0 24 24" width="19" height="19" hidden><path fill="currentColor" d="M4 9v6h4l5 5V4L8 9H4Zm17.3 1.3L19.6 12l1.7 1.7-1.4 1.4-1.7-1.7-1.7 1.7-1.4-1.4 1.7-1.7-1.7-1.7 1.4-1.4 1.7 1.7 1.7-1.7 1.4 1.4Z"/></svg>
+                </button>
+                <div class="volume">
+                  <input id="vol" type="range" min="0" max="100" value="80" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 实时动态频谱仪（与播放卡同宽，低/中/高频丝滑起落） -->
+          <canvas id="spectrum" class="spectrum" width="600" height="64" aria-hidden="true"></canvas>
+
+          <!-- 快捷操作区 -->
+          <div class="detail-actions">
+            <button id="btnFavCur" class="action-btn" title="收藏当前电台" aria-pressed="false">
+              <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="m12 17.3-6.2 3.7 1.6-7L2 9.2l7.1-.6L12 2l2.9 6.6 7.1.6-5.4 4.8 1.6 7Z"/></svg>
+              <span>收藏</span>
+            </button>
+            <button id="btnSleep" class="action-btn" title="睡眠定时器" aria-pressed="false">
+              <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+              <span>定时</span>
+            </button>
+            <button id="btnEq" class="action-btn" title="均衡器" aria-pressed="false">
+              <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M5 3h2v7h3v2H7v9H5v-9H2v-2h3V3Zm8 0h2v3h3v2h-3v11h-2V8h-3V6h3V3Zm8 0h2v7h3v2h-3v9h-2v-9h-3v-2h3V3Z"/></svg>
+              <span>均衡</span>
+            </button>
+            <button id="btnShare" class="action-btn" title="分享电台">
+              <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M14 9V5l7 7-7 7v-4.1c-5 0-8.5 1.6-11 5.1 1-5 4-10 11-11Z"/></svg>
+              <span>分享</span>
+            </button>
+          </div>
+
+          <!-- 完整信息区 -->
+          <div class="detail-section">
+            <div class="detail-section__title">电台信息</div>
+            <div class="info-grid" id="infoGrid"></div>
+          </div>
+
+          <!-- 相关/邻近电台 -->
+          <div class="detail-section">
+            <div class="detail-section__title">相关电台</div>
+            <div class="related-list" id="relatedList"></div>
+          </div>
+        </div>
+
+        <!-- 弹出面板（浮于卡片之上，位于滚动区外） -->
+        <!-- 睡眠定时 -->
+        <div id="sleepPop" class="popover" hidden>
+          <div class="popover__title">睡眠定时 · 选择时长</div>
+          <div class="popover__grid">
+            <button class="pop-opt" data-sleep="15">15 分钟</button>
+            <button class="pop-opt" data-sleep="30">30 分钟</button>
+            <button class="pop-opt" data-sleep="60">60 分钟</button>
+            <button class="pop-opt" data-sleep="90">90 分钟</button>
+            <button class="pop-opt pop-opt--warn" data-sleep="off">关闭定时器</button>
+          </div>
+        </div>
+
+        <!-- 均衡器 -->
+        <div id="eqPop" class="popover" hidden>
+          <div class="popover__title">均衡器 · 音效</div>
+          <div class="popover__list">
+            <button class="pop-opt" data-eq="flat">原声（均衡关闭）</button>
+            <button class="pop-opt" data-eq="pop">流行</button>
+            <button class="pop-opt" data-eq="rock">摇滚</button>
+            <button class="pop-opt" data-eq="classical">古典</button>
+            <button class="pop-opt" data-eq="vocal">人声增强</button>
+            <button class="pop-opt" data-eq="bass">超重低音</button>
+          </div>
+        </div>
+
+        <!-- 分享 -->
+        <div id="sharePop" class="popover" hidden>
+          <div class="popover__title">分享 · 扫码收听</div>
+          <div class="share-pop">
+            <div class="share-qr"><img id="shareQr" alt="二维码" /></div>
+            <div class="share-url" id="shareUrl" title="点击复制"></div>
+            <button id="shareCopy" class="share-copy">复制链接</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ============ 地球悬浮提示 ============ -->
+    <div id="tooltip" class="tooltip" hidden></div>
+
+    <!-- ============ 图例 ============ -->
+    <div class="legend glass"><span class="legend-dot"></span>广播电台点位<span class="legend-sep">·</span><span class="legend-tip">拖拽旋转 / 滚轮缩放 / 点击绿点收听</span></div>
+
+    <!-- ============ 地球视角控件 ============ -->
+    <div class="globe-ctrl glass">
+      <button id="btnZoomIn" class="globe-ctrl__btn" title="放大" aria-label="放大地图">
+        <svg viewBox="0 0 24 24" width="19" height="19"><path fill="currentColor" d="M11 5h2v5h5v2h-5v5h-2v-5H6v-2h5V5Z"/></svg>
+      </button>
+      <button id="btnZoomOut" class="globe-ctrl__btn" title="缩小" aria-label="缩小地图">
+        <svg viewBox="0 0 24 24" width="19" height="19"><path fill="currentColor" d="M6 11h12v2H6v-2Z"/></svg>
+      </button>
+      <div class="globe-ctrl__sep"></div>
+      <button id="btnNorth" class="globe-ctrl__btn" title="指北复位" aria-label="指北复位">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 3 16.5 19 12 16.2 7.5 19 12 3Z"/></svg>
+      </button>
+    </div>
+
+    <!-- ============ Toast ============ -->
+    <div id="toastStack" class="toast-stack"></div>
+
+    <!-- HLS relay base: empty on localhost (uses vite dev proxy middleware),
+         set to the Cloudflare Worker origin only on real (non-local) hosts. -->
+    <script>
+      (function () {
+        var h = location.hostname;
+        var isLocal = h === 'localhost' || h === '127.0.0.1' || h === '';
+        window.__ORBIS_WORKER__ = isLocal
+          ? ''
+          : 'https://orbis-fm-proxy.helpful-stilton.workers.dev';
+      })();
+    </script>
+  </body>
+</html>
