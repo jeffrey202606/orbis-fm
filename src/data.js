@@ -108,6 +108,17 @@ const STREAM_PROXY_HOSTS = new Set([
 // rewrites playlist URIs so follow-up segments stay inside the relay.
 // Plain MP3/AAC is left untouched — <audio> can play those cross-origin
 // without CORS.
+// On static hosting (GitHub Pages) there is no dev-server middleware, so the
+// HLS relay runs on a Cloudflare Worker. Set the base once at build/run time;
+// when empty (local dev) the same-origin `/__streampxy/` path is used.
+const WORKER_PROXY_RAW = (typeof globalThis !== 'undefined' && globalThis.__ORBIS_WORKER__) || '';
+const WORKER_PROXY = WORKER_PROXY_RAW && WORKER_PROXY_RAW.indexOf('__ORBIS_WORKER') === -1 ? WORKER_PROXY_RAW : '';
+const PROXY_BASE = (() => {
+  if (WORKER_PROXY) return WORKER_PROXY.replace(/\/$/, '');
+  // localhost / dev: keep same-origin path handled by vite.config.js
+  return '';
+})();
+
 export function proxifyHls(url, kind) {
   if (!url) return url;
   const isHls = kind === 'hls' || /\.m3u8(\?|$)/i.test(url);
@@ -116,7 +127,8 @@ export function proxifyHls(url, kind) {
     const u = new URL(url);
     // avoid double-wrapping an already-proxied URL
     if (u.pathname.startsWith('/__streampxy/')) return url;
-    return `/__streampxy/${u.protocol === 'http:' ? 'http' : 'https'}/${u.host}${u.pathname}${u.search}`;
+    const rel = `/__streampxy/${u.protocol === 'http:' ? 'http' : 'https'}/${u.host}${u.pathname}${u.search}`;
+    return PROXY_BASE ? `${PROXY_BASE}${rel}` : rel;
   } catch {
     return url;
   }

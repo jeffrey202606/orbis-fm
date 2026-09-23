@@ -1,0 +1,6 @@
+name = "orbis-fm-proxy"
+main = "src/index.js"
+compatibility_date = "2024-09-01"
+
+# Optional: attach to a custom route (e.g. radio666.xyz) later.
+# routes = [{ pattern = "radio666.xyz/__streampxy/*", zone_name = "radio666.xyz" }]

@@ -1,5 +1,9 @@
 node_modules/
 dist/
+node22/
+node22.zip
+worker/node_modules/
+worker/.wrangler/
 .vite/
 .DS_Store
 *.log

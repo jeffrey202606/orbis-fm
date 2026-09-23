@@ -396,6 +396,9 @@
     <!-- ============ Toast ============ -->
     <div id="toastStack" class="toast-stack"></div>
 
+    <!-- HLS relay base: empty on localhost (uses vite dev proxy), set to the
+         Cloudflare Worker origin when deploying to static hosting. -->
+    <script>window.__ORBIS_WORKER__ = 'https://orbis-fm-proxy.helpful-stilton.workers.dev';</script>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
