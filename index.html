@@ -72,7 +72,7 @@
         })();
       })();
     </script>
-    <script type="module" crossorigin src="/assets/index-BRFaOsia.js"></script>
+    <script type="module" crossorigin src="/assets/index-Cee_MNPh.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-DLHwKHB3.css">
   </head>
   <body>
@@ -398,5 +398,8 @@
     <!-- ============ Toast ============ -->
     <div id="toastStack" class="toast-stack"></div>
 
+    <!-- HLS relay base: empty on localhost (uses vite dev proxy), set to the
+         Cloudflare Worker origin when deploying to static hosting. -->
+    <script>window.__ORBIS_WORKER__ = 'https://orbis-fm-proxy.helpful-stilton.workers.dev';</script>
   </body>
 </html>
