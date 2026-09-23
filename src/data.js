@@ -83,34 +83,15 @@ export function regionOf(cc, lat, lon) {
   return CC_REGION[cc] || regionFromGeo(lat, lon);
 }
 
-// Stream origins without a browser-friendly CORS policy; the Vite dev server
-// relays them (see vite.config.js) so hls.js / <audio> can load the stream.
-// Manifests are rewritten so every follow-up segment stays inside the relay;
-// plain audio (MP3/AAC) is passed through byte-for-byte with Range support.
-const STREAM_PROXY_HOSTS = new Set([
-  'ngcdn001.cnr.cn', // CNR 中国之声 / 音乐之声
-  'ngcdn002.cnr.cn', // CNR 经济之声
-  'ngcdn003.cnr.cn',
-  'ngcdn004.cnr.cn',
-  'ngcdn005.cnr.cn',
-  'ngcdn006.cnr.cn',
-  'ngcdn007.cnr.cn',
-  'ngcdn008.cnr.cn',
-  'ls.qingting.fm', // 蜻蜓网络 HLS
-  'live.xmcdn.com', // 喜马拉雅
-  'live.ximalaya.com',
-]);
-
 // hls.js fetches manifests/segments via XHR, which requires a CORS header.
 // Most broadcasters do NOT send one, so an .m3u8 stream that works in VLC
 // will silently fail in the browser. We relay EVERY hls stream through the
-// dev-server proxy, which injects `access-control-allow-origin: *` and
-// rewrites playlist URIs so follow-up segments stay inside the relay.
-// Plain MP3/AAC is left untouched — <audio> can play those cross-origin
-// without CORS.
-// On static hosting (GitHub Pages) there is no dev-server middleware, so the
-// HLS relay runs on a Cloudflare Worker. Set the base once at build/run time;
-// when empty (local dev) the same-origin `/__streampxy/` path is used.
+// proxy, which injects `access-control-allow-origin: *` and rewrites playlist
+// URIs so follow-up segments stay inside the relay. On an https page, plain
+// http:// MP3/AAC is also blocked as mixed content, so those are relayed too
+// (in local dev, where the page is http, http streams stay untouched).
+// On static hosting (GitHub Pages) the relay runs on a Cloudflare Worker; in
+// local dev the same-origin `/__streampxy/` path is handled by vite.config.js.
 const WORKER_PROXY_RAW = (typeof globalThis !== 'undefined' && globalThis.__ORBIS_WORKER__) || '';
 const WORKER_PROXY = WORKER_PROXY_RAW && WORKER_PROXY_RAW.indexOf('__ORBIS_WORKER') === -1 ? WORKER_PROXY_RAW : '';
 const PROXY_BASE = (() => {
@@ -119,22 +100,40 @@ const PROXY_BASE = (() => {
   return '';
 })();
 
+// If a URL was already wrapped by the proxy (cached from a previous run, or
+// produced under a different PROXY_BASE), unwrap it back to the origin URL so
+// we can re-apply the proxy decision for the *current* environment.
+function unwrapProxy(url) {
+  if (typeof url !== 'string') return url;
+  try {
+    const u = new URL(url);
+    if (!u.pathname.startsWith('/__streampxy/')) return url;
+    const rest = decodeURIComponent(u.pathname.slice('/__streampxy/'.length));
+    const m = rest.match(/^(https?)\/([^/]+)(\/.*)?$/);
+    if (!m) return url;
+    const [, scheme, host, path = '/'] = m;
+    return `${scheme}://${host}${path}${u.search}`;
+  } catch {
+    return url;
+  }
+}
+
 export function proxifyHls(url, kind) {
   if (!url) return url;
-  const isHls = kind === 'hls' || /\.m3u8(\?|$)/i.test(url);
+  // Normalise to the origin URL first — idempotent across PROXY_BASE changes.
+  const origin = unwrapProxy(url);
+  const isHls = kind === 'hls' || /\.m3u8(\?|$)/i.test(origin);
   // On an https page, plain http:// audio is blocked as mixed content, so we
   // relay http streams (HLS or MP3/AAC) through the proxy as well. In local dev
   // (PROXY_BASE empty) http streams are left untouched — localhost is http.
-  const needsProxy = isHls || (/^http:\/\//i.test(url) && PROXY_BASE);
-  if (!needsProxy) return url;
+  const needsProxy = isHls || (/^http:\/\//i.test(origin) && PROXY_BASE);
+  if (!needsProxy) return origin;
   try {
-    const u = new URL(url);
-    // avoid double-wrapping an already-proxied URL
-    if (u.pathname.startsWith('/__streampxy/')) return url;
+    const u = new URL(origin);
     const rel = `/__streampxy/${u.protocol === 'http:' ? 'http' : 'https'}/${u.host}${u.pathname}${u.search}`;
     return PROXY_BASE ? `${PROXY_BASE}${rel}` : rel;
   } catch {
-    return url;
+    return origin;
   }
 }
 
@@ -440,6 +439,9 @@ export async function loadStations() {
     s.region = regionOf(s.cc, s.lat, s.lon);
     s.cityZh = s.cityZh || zhCity(s.city);
     s.url = proxifyHls(s.url, s.kind);
+    // precompute the lowercased search haystack once; the UI reuses it on
+    // every keystroke instead of rebuilding this string for all stations.
+    s._hay = `${s.name} ${s.cityZh || ''} ${s.city || ''} ${s.country} ${s.countryEn || ''} ${s.tags || ''}`.toLowerCase();
     return s;
   });
   spreadOverlappingPoints(stations);
@@ -491,7 +493,9 @@ export function getCachedStations() {
     const { ts, stations } = JSON.parse(raw);
     if (!Array.isArray(stations) || !stations.length) return null;
     if (Date.now() - ts > CACHE_TTL_MS) return null;
-    return stations.map((s, i) => ({ ...s, id: i }));
+    // Re-apply proxying for the current environment: a cached URL may carry a
+    // worker prefix from a previous run that no longer matches PROXY_BASE.
+    return stations.map((s, i) => ({ ...s, id: i, url: proxifyHls(s.url, s.kind) }));
   } catch {
     return null;
   }

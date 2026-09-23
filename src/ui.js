@@ -434,7 +434,7 @@ export class UI {
       if (this.level !== 'ALL' && s.level !== this.level) return false;
       if (this.ccFilter !== 'ALL' && s.cc !== this.ccFilter) return false;
       if (q) {
-        const hay = `${s.name} ${s.cityZh || ''} ${s.city || ''} ${s.country} ${s.countryEn || ''} ${s.tags || ''}`.toLowerCase();
+        const hay = s._hay || `${s.name} ${s.cityZh || ''} ${s.city || ''} ${s.country} ${s.countryEn || ''} ${s.tags || ''}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
