@@ -72,8 +72,8 @@
         })();
       })();
     </script>
-    <script type="module" crossorigin src="/assets/index-CRgg19QA.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-DLHwKHB3.css">
+    <script type="module" crossorigin src="/assets/index-BsiFD17D.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-DafZN-2u.css">
   </head>
   <body>
     <div id="cesiumContainer"></div>
@@ -398,8 +398,16 @@
     <!-- ============ Toast ============ -->
     <div id="toastStack" class="toast-stack"></div>
 
-    <!-- HLS relay base: empty on localhost (uses vite dev proxy), set to the
-         Cloudflare Worker origin when deploying to static hosting. -->
-    <script>window.__ORBIS_WORKER__ = 'https://orbis-fm-proxy.helpful-stilton.workers.dev';</script>
+    <!-- HLS relay base: empty on localhost (uses vite dev proxy middleware),
+         set to the Cloudflare Worker origin only on real (non-local) hosts. -->
+    <script>
+      (function () {
+        var h = location.hostname;
+        var isLocal = h === 'localhost' || h === '127.0.0.1' || h === '';
+        window.__ORBIS_WORKER__ = isLocal
+          ? ''
+          : 'https://orbis-fm-proxy.helpful-stilton.workers.dev';
+      })();
+    </script>
   </body>
 </html>
