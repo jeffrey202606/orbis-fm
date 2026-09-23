@@ -122,7 +122,11 @@ const PROXY_BASE = (() => {
 export function proxifyHls(url, kind) {
   if (!url) return url;
   const isHls = kind === 'hls' || /\.m3u8(\?|$)/i.test(url);
-  if (!isHls) return url;
+  // On an https page, plain http:// audio is blocked as mixed content, so we
+  // relay http streams (HLS or MP3/AAC) through the proxy as well. In local dev
+  // (PROXY_BASE empty) http streams are left untouched — localhost is http.
+  const needsProxy = isHls || (/^http:\/\//i.test(url) && PROXY_BASE);
+  if (!needsProxy) return url;
   try {
     const u = new URL(url);
     // avoid double-wrapping an already-proxied URL
