@@ -76,10 +76,10 @@
   { "name": "亚洲音乐台", "city": "网络电台", "cc": "CN", "lat": 31.18, "lon": 121.42, "url": "https://live.xmcdn.com/live/764/64.m3u8", "kind": "hls", "level": "network", "tags": "流行,亚洲,音乐", "bitrate": 64 },
   { "name": "怀旧音乐广播", "city": "网络电台", "cc": "CN", "lat": 31.27, "lon": 121.52, "url": "https://live.ximalaya.com/radio-first-page-app/live/2629/64.m3u8", "kind": "hls", "level": "network", "tags": "怀旧,经典,音乐", "bitrate": 64 },
   { "name": "亚洲粤语台", "city": "网络电台", "cc": "CN", "lat": 31.3, "lon": 121.39, "url": "https://live.ximalaya.com/radio-first-page-app/live/999/64.m3u8?transcode=ts", "kind": "hls", "level": "network", "tags": "粤语,流行,音乐", "bitrate": 64 },
-  { "name": "AsiaFM 高清音乐台", "city": "网络电台", "cc": "HK", "lat": 22.34, "lon": 114.19, "url": "https://lhttp.qtfm.cn/live/15318569/64k.mp3", "kind": "live", "level": "network", "tags": "流行,高清,音乐", "bitrate": 96 },
+  { "name": "AsiaFM 高清音乐台", "city": "网络电台", "cc": "HK", "lat": 22.34, "lon": 114.19, "url": "https://lhttp.qtfm.cn/live/15318341/64k.mp3", "kind": "live", "level": "network", "tags": "流行,高清,音乐", "bitrate": 96 },
   { "name": "AsiaFM 亚洲经典台", "city": "网络电台", "cc": "HK", "lat": 22.32, "lon": 114.15, "url": "http://goldfm.cn:8000/goldfm", "kind": "live", "level": "network", "tags": "经典,金曲,华语", "bitrate": 128 },
   { "name": "AsiaFM 亚洲热歌台", "city": "网络电台", "cc": "HK", "lat": 22.3, "lon": 114.22, "url": "http://hot.asiafm.net:8000/asiafm", "kind": "live", "level": "network", "tags": "热歌,流行,电子", "bitrate": 192 },
-  { "name": "AsiaFM 亚洲粤语台", "city": "网络电台", "cc": "HK", "lat": 22.36, "lon": 114.13, "url": "http://yyt.asiafm.net:8000/asiafm", "kind": "live", "level": "network", "tags": "粤语,流行,音乐", "bitrate": 96 },
+  { "name": "AsiaFM 亚洲粤语台", "city": "网络电台", "cc": "HK", "lat": 22.36, "lon": 114.13, "url": "https://lhttp.qtfm.cn/live/15318569/64k.mp3", "kind": "live", "level": "network", "tags": "粤语,流行,音乐", "bitrate": 96 },
   { "name": "Anison 动漫音乐台", "city": "大连", "cc": "CN", "lat": 38.914, "lon": 121.619, "url": "http://pool.anison.fm:9000/AniSonFM(320)", "kind": "live", "level": "network", "tags": "动漫,ACG,流行,J-pop", "bitrate": 0 },
 
   { "name": "央广 中国之声", "city": "北京", "cc": "CN", "lat": 39.908, "lon": 116.401, "url": "http://ngcdn001.cnr.cn/live/zgzs/index.m3u8", "kind": "hls", "level": "national", "tags": "新闻,综合,国家台", "bitrate": 0 },
