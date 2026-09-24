@@ -17,3 +17,7 @@ worker/.wrangler/
 *.njsproj
 *.sln
 *.sw?
+
+.deploytmp/
+node22/
+*.log
